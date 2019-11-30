@@ -1,0 +1,27 @@
+{
+  "name": "@serde/base",
+  "version": "0.0.0",
+  "description": "Classes, types and utilities for the SerdeJS framework.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hansl/serde.git"
+  },
+  "keywords": [
+    "Serialization",
+    "Deserialization",
+    "Encoding",
+    "Decoding",
+    "Serde",
+    "Base"
+  ],
+  "author": "Hans Larsen <hans@larsen.online>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hansl/serde/issues"
+  },
+  "homepage": "https://github.com/hansl/serde#readme"
+}

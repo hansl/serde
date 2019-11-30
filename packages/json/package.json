@@ -1,0 +1,32 @@
+{
+  "name": "@serde/json",
+  "version": "0.0.0",
+  "description": "JSON Serializer and Deserializer for the SerdeJS framework.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hansl/serde.git"
+  },
+  "keywords": [
+    "Serialization",
+    "Deserialization",
+    "Encoding",
+    "Decoding",
+    "Serde",
+    "JSON",
+    "JavaScript",
+    "Object"
+  ],
+  "author": "Hans Larsen <hans@larsen.online>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hansl/serde/issues"
+  },
+  "homepage": "https://github.com/hansl/serde#readme",
+  "dependencies": {
+    "@serde/base": "0.0.0"
+  }
+}

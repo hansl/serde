@@ -1,3 +1,14 @@
+# IDE
+.idea/
+.vscode/
+
+# Typescript
+**/*.js
+!jest.config.js
+**/*.d.ts
+**/*.map
+incremental.json
+
 # Logs
 logs
 *.log
