@@ -1,7 +1,13 @@
 /**
  * A range of memory. Allows more operations than ArrayBuffer or Node's Buffer.
  */
-export class Buffer extends ArrayBuffer {
+export class Buffer implements ArrayBuffer {
+  protected _inner: ArrayBuffer;
+
+  constructor(byteLength: number) {
+    this._inner = new ArrayBuffer(byteLength);
+  }
+
   static concat(buffer: Buffer, ...others: Buffer[]): Buffer {
     const res = new Buffer(buffer.byteLength + others.reduce((a, x) => a + x.byteLength, 0));
     const arr = new Uint8Array(res);

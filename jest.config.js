@@ -1,12 +1,11 @@
 module.exports = {
   "roots": [
-    "./src",
-    "./encoders"
+    "./packages"
   ],
   testMatch: [
-    "**/*_spec.ts"
+    "**/*_test.ts"
   ],
   "transform": {
     "^.+\\.(ts|tsx)?$": "ts-jest"
   },
-}
+};
