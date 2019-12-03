@@ -1,0 +1,31 @@
+{
+  "name": "@serde/cbor",
+  "version": "0.0.0",
+  "description": "CBOR Serializer and Deserializer for the SerdeJS Framework.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hansl/serde.git"
+  },
+  "keywords": [
+    "Serialization",
+    "Deserialization",
+    "SerdeJS",
+    "Serde",
+    "CBOR",
+    "Encoding",
+    "Decoding"
+  ],
+  "author": "Hans Larsen <hans@larsen.online>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hansl/serde/issues"
+  },
+  "homepage": "https://github.com/hansl/serde#readme",
+  "dependencies": {
+    "@serde/base": "0.0.0"
+  }
+}

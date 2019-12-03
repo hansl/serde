@@ -1,95 +1,38 @@
 /**
  * A range of memory.
  */
-export class Buffer extends ArrayBuffer {}
-
-export enum CompareResult {
-  Smaller = -1,
-  Equal = 0,
-  Greater = 1,
-}
-
-export type Covariant<X, T> = X extends T ? X : never;
-export type Contravariant<X, T> = T extends X ? X : never;
-
-/**
- * A type category. This represents the general way to decode, encode and validate whether
- * a value can be encoded/decoded using this class.
- */
-export abstract class Type<T = any> {
-  /**
-   * The name of the type. This can be used to compare types together.
-   */
-  abstract readonly name: string;
-
-  /**
-   * A priority for the type. This can be used when two types are compatible with each
-   * others, but one should take precedence on the other.
-   */
-  abstract readonly priority: number;
-
-  /**
-   * Whether a value is an element of this type.
-   * @param x The value.
-   */
-  abstract elementOf<X>(x: X): boolean;
-
-  /**
-   * Whether a value is covariant to this type. E.g. Natural numbers are covariant to Integers.
-   * This is used
-   * @param x
-   */
-  covariant<X>(x: Covariant<X, T>): boolean {
-    return this.elementOf(x);
-  }
-  contravariant<X>(x: Contravariant<X, T>): boolean {
-    return this.elementOf(x);
+export class Buffer extends ArrayBuffer {
+  static concat(buffer: Buffer, ...others: Buffer[]): Buffer {
+    return buffer.concat(...others);
   }
 
-  abstract compare<X extends T, Y extends T>(x: X, y: Y): CompareResult;
+  concat(...others: Buffer[]): Buffer {
+    const res = new Buffer(this.byteLength + others.reduce((a, x) => a + x.byteLength, 0));
+    const arr = new Uint8Array(res);
+    arr.set(new Uint8Array(this), 0);
+    let i = this.byteLength;
+    for (const other of others) {
+      arr.set(new Uint8Array(other), i);
+      i += other.byteLength;
+    }
 
-  abstract serialize<S extends Serializer, V extends T>(s: S, v: V): void;
-}
-
-export class Number extends Type<number> {
-  name = 'number';
-  priority = -Infinity;
-
-  elementOf(x: any) {
-    return typeof x == 'number';
+    return res;
   }
 }
 
-export class String extends Type<string> {
-  name = 'string';
-  priority = -Infinity;
+export interface JavascriptRecord extends Record<string | number, JavascriptType> {}
+export interface JavascriptArray extends Array<JavascriptType> {}
 
-  elementOf<X>(x: X): boolean {
-    return typeof x == 'string';
-  }
-}
-
-export class TypedArray<T> extends Type<T[]> {
-  name = 'array';
-  priority = -Infinity;
-
-  constructor(protected _type: Type<T>) {
-    super();
-  }
-
-  elementOf<X>(x: X): boolean {
-    return Array.isArray(x) && x.every(x => this._type.elementOf(x));
-  }
-
-  covariant<X>(x: X extends T[] ? X : never): boolean {
-    return Array.isArray(x) && x.every(x => this._type.elementOf(x));
-  }
-}
-
-export class 
+export type PrimitiveType = undefined | null | boolean | number | string;
+export type JavascriptType = PrimitiveType | JavascriptRecord | JavascriptArray;
 
 export abstract class Serializer {
-  abstract serialize(x: any): void;
+  // Primitive JavaScript types should be always supported.
+  abstract serialize_boolean(b: boolean): Buffer;
+  abstract serialize_number(n: number): Buffer;
+  abstract serialize_string(s: string): Buffer;
+  abstract serialize_undefined(): Buffer;
+  abstract serialize_null(): Buffer;
+  abstract serialize_record(o: JavascriptRecord): Buffer;
+  abstract serialize_array(a: JavascriptArray): Buffer;
 }
-
-export abstract class
