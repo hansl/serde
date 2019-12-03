@@ -1,12 +1,12 @@
 /**
  * List of type classes to build types out of.
  */
-import { Buffer, Serializer } from "./index";
+import { Serializer } from "./serializer";
 
 export enum CompareResult {
-  Smaller = -1,
+  SmallerThan = -1,
   Equal = 0,
-  Greater = 1,
+  GreaterThan = 1,
 }
 
 export type Covariant<X, T> = X extends T ? X : never;
@@ -45,7 +45,7 @@ export abstract class Type<T = any> {
    * Compare two values of this type.
    */
   abstract compare<X extends T, Y extends T>(x: X, y: Y): CompareResult;
-  abstract serialize<S extends Serializer, V extends T>(s: S, v: V): Buffer;
+  abstract serialize<S extends Serializer, V extends T>(s: S, v: V): void;
 }
 
 export class Number extends Type<number> {
@@ -60,8 +60,8 @@ export class Number extends Type<number> {
     return x - y;
   }
 
-  serialize<S extends Serializer, V extends number>(s: S, v: V): Buffer {
-    return s.serialize_number(v);
+  serialize<S extends Serializer, V extends number>(s: S, v: V): void {
+    s.serialize_number(v);
   }
 }
 
@@ -75,6 +75,10 @@ export class String extends Type<string> {
 
   compare<X extends string, Y extends string>(x: X, y: Y): CompareResult {
     return x.localeCompare(y);
+  }
+
+  serialize<S extends Serializer, V extends string>(s: S, v: V): void {
+    s.serialize_string(v);
   }
 }
 
@@ -92,6 +96,29 @@ export class TypedArray<T> extends Type<T[]> {
 
   covariant<X>(x: Covariant<X, T[]>): boolean {
     return Array.isArray(x) && x.every(x => this._type.elementOf(x));
+  }
+
+  compare<X extends T[], Y extends T[]>(x: X, y: Y): CompareResult {
+    for (let i = 0; i < x.length ; i++) {
+      if (i >= y.length) {
+        return CompareResult.GreaterThan;
+      }
+
+      const maybe = this._type.compare(x[i], y[i]);
+      if (maybe != CompareResult.Equal) {
+        return maybe;
+      }
+    }
+
+    return x.length < y.length ? CompareResult.SmallerThan : CompareResult.Equal;
+  }
+
+  serialize<S extends Serializer, V extends T[]>(s: S, v: V): void {
+    const seq = s.serialize_sequence();
+    for (const i of v) {
+      this._type.serialize(seq.item(), i);
+    }
+    seq.end();
   }
 }
 
@@ -111,5 +138,28 @@ export class Tuple<T extends Array<any>> extends Type<T> {
   covariant<X>(x: Covariant<X, T>): boolean {
     return Array.isArray(x) && x.length >= this._types.length
         && this._types.every((t, i) => t.covariant(x[i]));
+  }
+
+  compare<X extends T[], Y extends T[]>(x: X, y: Y): CompareResult {
+    for (let i = 0; i < this._types.length ; i++) {
+      const maybe = this._types[i].compare(x[i], y[i]);
+      if (maybe != CompareResult.Equal) {
+        return maybe;
+      }
+    }
+
+    return (x.length < y.length)
+         ? CompareResult.SmallerThan
+         : (x.length > y.length)
+           ? CompareResult.GreaterThan
+           : CompareResult.Equal;
+  }
+
+  serialize<S extends Serializer, V extends T[]>(s: S, v: V): void {
+    const seq = s.serialize_sequence();
+    for (let i = 0; i < this._types.length ; i++) {
+      this._types[i].serialize(seq.item(), v[i]);
+    }
+    seq.end();
   }
 }
