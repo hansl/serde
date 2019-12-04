@@ -8,7 +8,7 @@ export class Buffer implements ArrayBuffer {
     this._inner = new ArrayBuffer(byteLength);
   }
 
-  static concat(buffer: Buffer, ...others: Buffer[]): Buffer {
+  static concat(buffer: Buffer | ArrayBuffer, ...others: (Buffer | ArrayBuffer)[]): Buffer {
     const res = new Buffer(buffer.byteLength + others.reduce((a, x) => a + x.byteLength, 0));
     const arr = new Uint8Array(res);
     arr.set(new Uint8Array(buffer), 0);
@@ -19,6 +19,20 @@ export class Buffer implements ArrayBuffer {
     }
 
     return res;
+  }
+
+  /**
+   * Read-only. The length of the ArrayBuffer (in bytes).
+   */
+  get byteLength(): number {
+    return this._inner.byteLength;
+  }
+
+  /**
+   * Returns a section of an ArrayBuffer.
+   */
+  slice(begin: number, end?: number): ArrayBuffer {
+    return this._inner.slice(begin, end);
   }
 }
 
@@ -50,27 +64,6 @@ export class ReadBuffer extends Buffer {
  * A range of memory that can be written to.
  */
 export class WriteBuffer extends Buffer {
-  protected _inner: Buffer;
-
-  constructor(byteLength: number) {
-    super(0);
-    this._inner = new Buffer(byteLength);
-  }
-
-  /**
-   * Read-only. The length of the ArrayBuffer (in bytes).
-   */
-  get byteLength(): number {
-    return this._inner.byteLength;
-  }
-
-  /**
-   * Returns a section of an ArrayBuffer.
-   */
-  slice(begin: number, end?: number): ArrayBuffer {
-    return this._inner.slice(begin, end);
-  }
-
   write(bytes: Uint8Array | Buffer) {
     this._inner = Buffer.concat(this._inner, bytes);
   }

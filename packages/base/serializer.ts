@@ -5,22 +5,74 @@ import { Buffer } from './buffer';
  * A Map serializer, which takes an unknown number of key-value pairs and serialize them.
  */
 
-export abstract class SerializeMap<Key = string> {
-  abstract keyvalue(key: Key): Serializer;
+export abstract class SerializeMap<EncoderT extends Encoder<any>, Key = string> {
+  abstract keyvalue(key: Key): Serializer<EncoderT>;
   end() {}
 }
 
 /**
  * A Sequence serializer, which takes an unknown number of items ans serialize them.
  */
-export abstract class SerializeSequence {
+export abstract class SerializeSequence<Encoder> {
   abstract item(): Serializer;
   end() {}
 }
 
-export abstract class Serializer {
-  abstract done(): Buffer;
+export interface Encoder<T> {
+  readonly name: string;
+  readonly priority: number;
 
+  match(value: any): value is T;
+  encode(value: T, serializer: Serializer<this>): Buffer;
+}
+
+export abstract class Serializer<EncoderT extends Encoder<any> = Encoder<any>> {
+  protected _encoders: EncoderT[] = [];
+
+  protected _validateEncoder(_encoder: EncoderT): boolean {
+    return true;
+  }
+
+  addEncoder(encoder: EncoderT) {
+    if (!this._validateEncoder(encoder)) {
+      throw new Error("Encoder not supported by this serializer.");
+    }
+    let priority = encoder.priority;
+    for (let i = 0, len = this._encoders.length; i < len; i++) {
+      if (this._encoders[i].priority > priority) {
+        this._encoders.splice(i, 0, encoder);
+        return;
+      }
+    }
+
+    this._encoders.push(encoder);
+  }
+
+  removeEncoder(encoder: EncoderT) {
+    const i = this._encoders.indexOf(encoder);
+    if (i >= 0) {
+      this._encoders.splice(i, 1);
+    }
+  }
+
+  clearEncoders() {
+    this._encoders = [];
+  }
+
+  serialize(value: any): Buffer {
+    for (const encoder of this._encoders) {
+      if (encoder.match(value)) {
+        // They're already sorted.
+        return encoder.encode(value);
+      }
+    }
+
+    throw new Error("No encoder found for value: " + JSON.stringify(value));
+  }
+}
+
+
+export abstract class JavascriptSerializer extends Serializer {
   // Primitive JavaScript types should be always supported.
   abstract serialize_value(v: JavascriptType): this;
   abstract serialize_boolean(b: boolean): this;
@@ -33,59 +85,4 @@ export abstract class Serializer {
 
   abstract serialize_map(): SerializeMap;
   abstract serialize_sequence(): SerializeSequence;
-}
-
-
-export class CallbackSerializer<T extends Serializer> extends Serializer {
-  constructor(protected _inner: T, protected _onDone: (bytes: Buffer) => void) {
-    super();
-  }
-  get inner(): T {
-    return this._inner;
-  }
-  done() {
-    const result = this._inner.done();
-    this._onDone(result);
-    return result;
-  }
-
-  serialize_value(v: JavascriptType): this {
-    this._inner.serialize_value(v);
-    return this;
-  }
-  serialize_boolean(b: boolean): this {
-    this._inner.serialize_boolean(b);
-    return this;
-  }
-  serialize_number(n: number): this {
-    this._inner.serialize_number(n);
-    return this;
-  }
-  serialize_string(s: string): this {
-    this._inner.serialize_string(s);
-    return this;
-  }
-  serialize_undefined(): this {
-    this._inner.serialize_undefined();
-    return this;
-  }
-  serialize_null(): this {
-    this._inner.serialize_null();
-    return this;
-  }
-  serialize_record(o: JavascriptRecord): this {
-    this._inner.serialize_record(o);
-    return this;
-  }
-  serialize_array(a: JavascriptArray): this {
-    this._inner.serialize_array(a);
-    return this;
-  }
-
-  serialize_map(): SerializeMap {
-    return this._inner.serialize_map();
-  }
-  serialize_sequence(): SerializeSequence {
-    return this._inner.serialize_sequence();
-  }
 }
